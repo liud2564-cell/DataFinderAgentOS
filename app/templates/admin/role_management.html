@@ -1,0 +1,491 @@
+{% extends "base.html" %}
+{% block body %}
+<style>
+.layui-layout-admin .layui-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+.layui-layout-admin .layui-logo {
+    color: #fff !important;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.layui-side {
+    background: #1e293b !important;
+    top: 60px;
+}
+.layui-side-scroll {
+    width: 220px;
+}
+.layui-nav-tree {
+    background: #1e293b !important;
+}
+.layui-nav-tree .layui-nav-item a {
+    color: rgba(255,255,255,.75);
+    height: 46px;
+    line-height: 46px;
+}
+.layui-nav-tree .layui-nav-item a:hover {
+    background: rgba(255,255,255,.08);
+    color: #fff;
+}
+.layui-nav-tree .layui-nav-item.layui-this a {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    color: #fff;
+}
+.layui-nav-tree .layui-nav-item a i {
+    font-size: 16px !important;
+}
+.layui-body {
+    top: 60px;
+    left: 220px;
+    background: #f1f5f9;
+    padding: 20px;
+    overflow-y: auto;
+}
+.layui-footer {
+    left: 220px;
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
+    text-align: center;
+    line-height: 50px;
+}
+.search-bar {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.data-table {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.pagination-bar {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    text-align: center;
+}
+</style>
+
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header">
+        <div class="layui-logo">
+            <i class="layui-icon layui-icon-chart-screen"></i>
+            智能瞭望与问数后台
+        </div>
+        <ul class="layui-nav layui-layout-right">
+            <li class="layui-nav-item">
+                <a href="javascript:;">
+                    <i class="layui-icon layui-icon-username"></i>
+                    {{ username }}
+                </a>
+                <dl class="layui-nav-child">
+                    <dd><a href="javascript:;" onclick="showProfile()">个人信息</a></dd>
+                    <dd><a href="javascript:;" onclick="showChangePwd()">修改密码</a></dd>
+                    <dd><a href="/admin/" onclick="event.preventDefault(); document.getElementById('admin-logout-form').submit();">退出登录</a></dd>
+                </dl>
+            </li>
+        </ul>
+    </div>
+
+    <div class="layui-side">
+        <div class="layui-side-scroll">
+            <ul class="layui-nav layui-nav-tree" lay-filter="side-nav">
+                {% for parent in user_info.get('menu_tree', []) %}
+                {% if parent.get('children', []) %}
+                <li class="layui-nav-item {% if request.path == parent.get('func_route') %}layui-this{% elif parent.get('has_active_child') %}layui-nav-itemed{% end %}">
+                    <a href="javascript:;">
+                        <i class="layui-icon {{ parent.get('func_icon') }}"></i> {{ parent.get('func_name') }}
+                    </a>
+                    <dl class="layui-nav-child">
+                        {% for child in parent.get('children', []) %}
+                        <dd class="{% if request.path == child.get('func_route') %}layui-this{% end %}">
+                            <a href="{{ child.get('func_route') }}"><i class="layui-icon {{ child.get('func_icon') }}"></i> {{ child.get('func_name') }}</a>
+                        </dd>
+                        {% end %}
+                    </dl>
+                </li>
+                {% else %}
+                <li class="layui-nav-item {% if request.path == parent.get('func_route') %}layui-this{% end %}">
+                    <a href="{{ parent.get('func_route') }}">
+                        <i class="layui-icon {{ parent.get('func_icon') }}"></i> {{ parent.get('func_name') }}
+                    </a>
+                </li>
+                {% end %}
+                {% end %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="layui-body">
+        <div class="search-bar">
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" id="addRoleBtn"><i class="layui-icon layui-icon-addition"></i> 新增角色</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-table">
+            <table class="layui-table" lay-skin="line">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>角色名称</th>
+                        <th>角色编码</th>
+                        <th>描述</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="roleTableBody">
+                    <tr><td colspan="6" style="text-align: center;">加载中...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-bar">
+            <div id="pagination"></div>
+        </div>
+    </div>
+
+    <div class="layui-footer">
+        © 2024 智能瞭望与问数系统 - 政务数据智能分析平台
+    </div>
+</div>
+
+<!-- 角色功能树弹窗 -->
+<div style="display: none;" id="roleFuncModal">
+    <div style="padding: 20px;">
+        <h4>分配功能权限</h4>
+        <div id="funcTree" style="margin-top: 20px; max-height: 400px; overflow-y: auto;"></div>
+    </div>
+</div>
+
+<!-- 新增/编辑角色弹窗 -->
+<div style="display: none;" id="roleFormModal">
+    <form class="layui-form layui-form-pane" lay-filter="roleForm" style="padding: 20px;">
+        <input type="hidden" name="role_id" id="roleId">
+        <div class="layui-form-item">
+            <label class="layui-form-label">角色名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" lay-verify="required" placeholder="请输入角色名称" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">角色编码</label>
+            <div class="layui-input-block">
+                <input type="text" name="code" lay-verify="required" placeholder="请输入角色编码" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">描述</label>
+            <div class="layui-input-block">
+                <textarea name="description" placeholder="请输入描述" class="layui-textarea"></textarea>
+            </div>
+        </div>
+    </form>
+</div>
+{% include "profile_modals.html" %}
+{% end %}
+
+{% block script %}
+<script>
+layui.use(['form', 'layer', 'jquery'], function(){
+    var form = layui.form;
+    var layer = layui.layer;
+    var $ = layui.$;
+
+    // 个人信息弹窗
+    window.showProfile = function() {
+        $.ajax({
+            url: '/api/profile',
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                if (res.success) {
+                    var u = res.data;
+                    $('#profileUsername').text(u.username || '-');
+                    $('#profileRole').text(u.role_name || '-');
+                    $('#profileStatus').text(u.status == 1 ? '启用' : '禁用');
+                    $('#profileCreated').text(u.created_at || '-');
+                    layer.open({
+                        type: 1,
+                        title: '个人信息',
+                        area: ['500px'],
+                        content: $('#profileModal')
+                    });
+                }
+            },
+            error: function() {
+                layer.msg('获取个人信息失败', {icon: 2});
+            }
+        });
+    }
+
+    // 修改密码弹窗
+    window.showChangePwd = function() {
+        layer.open({
+            type: 1,
+            title: '修改密码',
+            area: ['500px'],
+            content: $('#changePwdModal'),
+            btn: ['保存', '取消'],
+            yes: function(index) {
+                var oldPwd = $('input[name="old_password"]').val();
+                var newPwd = $('input[name="new_password"]').val();
+                var confirmPwd = $('input[name="confirm_password"]').val();
+                if (!oldPwd || !newPwd || !confirmPwd) {
+                    layer.msg('请填写完整', {icon: 2});
+                    return;
+                }
+                if (newPwd !== confirmPwd) {
+                    layer.msg('两次密码输入不一致', {icon: 2});
+                    return;
+                }
+                if (newPwd.length < 6) {
+                    layer.msg('新密码长度不能少于6位', {icon: 2});
+                    return;
+                }
+                $.ajax({
+                    url: '/api/profile/change-password',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {old_password: oldPwd, new_password: newPwd},
+                    headers: {'X-XSRFToken': getXsrfToken()},
+                    success: function(res) {
+                        if (res.success) {
+                            layer.msg('密码修改成功，请重新登录', {icon: 1}, function() {
+                                document.getElementById('admin-logout-form').submit();
+                            });
+                            layer.close(index);
+                        } else {
+                            layer.msg(res.message, {icon: 2});
+                        }
+                    },
+                    error: function() {
+                        layer.msg('请求失败', {icon: 2});
+                    }
+                });
+            },
+            end: function() {
+                $('input[name="old_password"]').val('');
+                $('input[name="new_password"]').val('');
+                $('input[name="confirm_password"]').val('');
+            }
+        });
+    }
+
+    // 获取XSRF token
+    function getXsrfToken() {
+        var match = document.cookie.match(/(_xsrf=([^;]*)|$)/);
+        return match ? decodeURIComponent(match[2]) : '';
+    }
+
+    // 加载角色列表
+    function loadRoles() {
+        $.ajax({
+            url: '/api/roles/list',
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                console.log('Roles API Response:', res);
+                var data = res && res.data ? res.data : [];
+                var html = '';
+                data.forEach(function(role) {
+                    var statusHtml = role.status == 1 ? '<span class="layui-badge layui-bg-green">启用</span>' : '<span class="layui-badge layui-bg-gray">禁用</span>';
+                    var isDefault = role.code === 'admin' || role.code === 'user';
+                    html += '<tr>' +
+                        '<td>' + role.id + '</td>' +
+                        '<td>' + role.name + '</td>' +
+                        '<td>' + role.code + '</td>' +
+                        '<td>' + (role.description || '-') + '</td>' +
+                        '<td>' + statusHtml + '</td>' +
+                        '<td>' +
+                            (!isDefault ? '<button class="layui-btn layui-btn-xs" onclick="editRole(' + role.id + ')">编辑</button> ' : '') +
+                            (!isDefault ? '<button class="layui-btn layui-btn-danger layui-btn-xs" onclick="deleteRole(' + role.id + ', \'' + role.name + '\')">删除</button> ' : '') +
+                            '<button class="layui-btn layui-btn-normal layui-btn-xs" onclick="assignFunctions(' + role.id + ', \'' + role.name + '\')">分配功能</button>' +
+                        '</td>' +
+                    '</tr>';
+                });
+                $('#roleTableBody').html(html || '<tr><td colspan="6" style="text-align: center; color: #999;">暂无数据</td></tr>');
+                
+                // 渲染分页
+                var total = data.length;
+                var pages = Math.ceil(total / 20);
+                var paginationHtml = '<div class="layui-box layui-laypage layui-laypage-default">';
+                paginationHtml += '<span class="layui-laypage-count">共 ' + total + ' 条</span>';
+                for (var i = 1; i <= pages; i++) {
+                    paginationHtml += '<a href="javascript:;" class="layui-laypage-em current" data-page="' + i + '">' + i + '</a>';
+                }
+                paginationHtml += '</div>';
+                $('#pagination').html(paginationHtml);
+            },
+            error: function(xhr, status, error) {
+                console.error('Roles API Error:', status, error);
+                $('#roleTableBody').html('<tr><td colspan="6" style="text-align: center; color: red;">加载失败</td></tr>');
+            }
+        });
+    }
+
+    // 初始加载
+    loadRoles();
+
+    // 新增角色
+    $('#addRoleBtn').on('click', function() {
+        $('#roleId').val('');
+        form.val('roleForm', {
+            'name': '',
+            'code': '',
+            'description': ''
+        });
+        layer.open({
+            type: 1,
+            title: '新增角色',
+            area: ['500px'],
+            content: $('#roleFormModal'),
+            btn: ['保存', '取消'],
+            yes: function(index) {
+                var formData = form.val('roleForm');
+                $.ajax({
+                    url: '/api/roles/create',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: formData,
+                    headers: {'X-XSRFToken': getXsrfToken()},
+                    success: function(res) {
+                        if (res.success) {
+                            layer.msg('角色创建成功', {icon: 1});
+                            layer.close(index);
+                            loadRoles();
+                        } else {
+                            layer.msg(res.message, {icon: 2});
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        layer.msg('请求失败: ' + error, {icon: 2});
+                    }
+                });
+            }
+        });
+    });
+
+    // 编辑角色
+    window.editRole = function(roleId) {
+        layer.msg('编辑角色功能开发中...', {icon: 0});
+    };
+
+    // 删除角色
+    window.deleteRole = function(roleId, roleName) {
+        layer.confirm('确定要删除角色 "' + roleName + '" 吗？', function(index) {
+            $.ajax({
+                url: '/api/roles/delete',
+                type: 'POST',
+                dataType: 'json',
+                data: {role_id: roleId},
+                headers: {'X-XSRFToken': getXsrfToken()},
+                success: function(res) {
+                    if (res.success) {
+                        layer.msg('角色删除成功', {icon: 1});
+                        layer.close(index);
+                        loadRoles();
+                    } else {
+                        layer.msg(res.message, {icon: 2});
+                    }
+                },
+                error: function(xhr, status, error) {
+                    layer.msg('请求失败: ' + error, {icon: 2});
+                }
+            });
+        });
+    };
+
+    // 分配功能
+    window.assignFunctions = function(roleId, roleName) {
+        // 加载所有功能和已分配的功能ID
+        $.when(
+            $.ajax({url: '/api/functions/list', type: 'GET', dataType: 'json'}),
+            $.ajax({url: '/api/roles/functions', type: 'GET', dataType: 'json', data: {role_id: roleId}})
+        ).done(function(funcsRes, assignedRes) {
+            var funcs = funcsRes[0] && funcsRes[0].data ? funcsRes[0].data : [];
+            var assignedIds = assignedRes[0] && assignedRes[0].data ? assignedRes[0].data : [];
+            
+            // 构建功能树HTML
+            var html = '<div style="padding: 10px;">';
+            // 父功能
+            var parentFuncs = funcs.filter(function(f) { return f.parent_id == 0; });
+            parentFuncs.forEach(function(pf) {
+                var checked = assignedIds.indexOf(pf.id) > -1 ? 'checked' : '';
+                html += '<div style="margin: 8px 0;"><label style="font-weight: bold; cursor: pointer;">' +
+                    '<input type="checkbox" class="func-checkbox" value="' + pf.id + '" ' + checked + '> ' +
+                    (pf.icon ? '<i class="layui-icon ' + pf.icon + '"></i> ' : '') + pf.name +
+                    '</label></div>';
+                // 子功能
+                var childFuncs = funcs.filter(function(f) { return f.parent_id == pf.id; });
+                childFuncs.forEach(function(cf) {
+                    var checked2 = assignedIds.indexOf(cf.id) > -1 ? 'checked' : '';
+                    html += '<div style="margin: 4px 0 4px 30px;"><label style="cursor: pointer;">' +
+                        '<input type="checkbox" class="func-checkbox" value="' + cf.id + '" ' + checked2 + '> ' +
+                        (cf.icon ? '<i class="layui-icon ' + cf.icon + '"></i> ' : '') + cf.name +
+                        '</label></div>';
+                });
+            });
+            html += '</div>';
+            
+            $('#funcTree').html(html);
+            
+            layer.open({
+                type: 1,
+                title: '为 "' + roleName + '" 分配功能',
+                area: ['600px', '500px'],
+                content: $('#roleFuncModal'),
+                btn: ['保存', '取消'],
+                yes: function(index) {
+                    var selectedIds = [];
+                    $('.func-checkbox:checked').each(function() {
+                        selectedIds.push($(this).val());
+                    });
+                    
+                    $.ajax({
+                        url: '/api/roles/functions/save',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {role_id: roleId, func_ids: selectedIds.join(',')},
+                        headers: {'X-XSRFToken': getXsrfToken()},
+                        success: function(res) {
+                            if (res.success) {
+                                layer.msg('功能分配保存成功', {icon: 1});
+                                layer.close(index);
+                            } else {
+                                layer.msg(res.message, {icon: 2});
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            layer.msg('保存失败: ' + error, {icon: 2});
+                        }
+                    });
+                }
+            });
+        }).fail(function() {
+            layer.msg('加载功能列表失败', {icon: 2});
+        });
+    };
+});
+</script>
+{% end %}

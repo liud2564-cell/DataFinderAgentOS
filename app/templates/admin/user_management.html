@@ -1,0 +1,600 @@
+{% extends "base.html" %}
+{% block body %}
+<style>
+.layui-layout-admin .layui-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+.layui-layout-admin .layui-logo {
+    color: #fff !important;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.layui-side {
+    background: #1e293b !important;
+    top: 60px;
+}
+.layui-side-scroll {
+    width: 220px;
+}
+.layui-nav-tree {
+    background: #1e293b !important;
+}
+.layui-nav-tree .layui-nav-item a {
+    color: rgba(255,255,255,.75);
+    height: 46px;
+    line-height: 46px;
+}
+.layui-nav-tree .layui-nav-item a:hover {
+    background: rgba(255,255,255,.08);
+    color: #fff;
+}
+.layui-nav-tree .layui-nav-item.layui-this a {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    color: #fff;
+}
+.layui-body {
+    top: 60px;
+    left: 220px;
+    background: #f1f5f9;
+    padding: 20px;
+    overflow-y: auto;
+}
+.layui-footer {
+    left: 220px;
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
+    text-align: center;
+    line-height: 50px;
+}
+.search-bar {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.data-table {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.pagination-bar {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    text-align: center;
+}
+</style>
+
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header">
+        <div class="layui-logo">
+            <i class="layui-icon layui-icon-chart-screen"></i>
+            智能瞭望与问数后台
+        </div>
+        <ul class="layui-nav layui-layout-right">
+            <li class="layui-nav-item">
+                <a href="javascript:;">
+                    <i class="layui-icon layui-icon-username"></i>
+                    {{ username }}
+                </a>
+                <dl class="layui-nav-child">
+                    <dd><a href="javascript:;" onclick="showProfile()">个人信息</a></dd>
+                    <dd><a href="javascript:;" onclick="showChangePwd()">修改密码</a></dd>
+                    <dd><a href="/admin/" onclick="event.preventDefault(); document.getElementById('admin-logout-form').submit();">退出登录</a></dd>
+                </dl>
+            </li>
+        </ul>
+    </div>
+
+    <div class="layui-side">
+        <div class="layui-side-scroll">
+            <ul class="layui-nav layui-nav-tree" lay-filter="side-nav">
+                {% for parent in user_info.get('menu_tree', []) %}
+                {% if parent.get('children', []) %}
+                <li class="layui-nav-item {% if request.path == parent.get('func_route') %}layui-this{% elif parent.get('has_active_child') %}layui-nav-itemed{% end %}">
+                    <a href="javascript:;">
+                        <i class="layui-icon {{ parent.get('func_icon') }}"></i> {{ parent.get('func_name') }}
+                    </a>
+                    <dl class="layui-nav-child">
+                        {% for child in parent.get('children', []) %}
+                        <dd class="{% if request.path == child.get('func_route') %}layui-this{% end %}">
+                            <a href="{{ child.get('func_route') }}"><i class="layui-icon {{ child.get('func_icon') }}"></i> {{ child.get('func_name') }}</a>
+                        </dd>
+                        {% end %}
+                    </dl>
+                </li>
+                {% else %}
+                <li class="layui-nav-item {% if request.path == parent.get('func_route') %}layui-this{% end %}">
+                    <a href="{{ parent.get('func_route') }}">
+                        <i class="layui-icon {{ parent.get('func_icon') }}"></i> {{ parent.get('func_name') }}
+                    </a>
+                </li>
+                {% end %}
+                {% end %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="layui-body">
+        <div class="search-bar">
+            <form class="layui-form" lay-filter="searchForm">
+                <div class="layui-row layui-col-space15">
+                    <div class="layui-col-md4">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">用户名</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="search" placeholder="请输入用户名" class="layui-input">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layui-col-md4">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">角色</label>
+                            <div class="layui-input-block">
+                                <select name="role_id">
+                                    <option value="">全部角色</option>
+                                    <option value="1">系统管理员</option>
+                                    <option value="2">普通用户</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layui-col-md4">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">状态</label>
+                            <div class="layui-input-block">
+                                <select name="status">
+                                    <option value="">全部状态</option>
+                                    <option value="1">启用</option>
+                                    <option value="0">禁用</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="searchBtn"><i class="layui-icon layui-icon-search"></i> 搜索</button>
+                        <button type="reset" class="layui-btn layui-btn-primary"><i class="layui-icon layui-icon-refresh"></i> 重置</button>
+                        <button class="layui-btn layui-btn-normal" id="addUserBtn"><i class="layui-icon layui-icon-addition"></i> 新增用户</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="data-table">
+            <table class="layui-table" lay-skin="line" id="userTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>用户名</th>
+                        <th>角色</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    <tr><td colspan="6" style="text-align: center;">加载中...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-bar">
+            <div id="pagination"></div>
+        </div>
+    </div>
+
+    <div class="layui-footer">
+        © 2024 智能瞭望与问数系统 - 政务数据智能分析平台
+    </div>
+</div>
+
+<!-- 新增/编辑用户弹窗 -->
+<div style="display: none;" id="userFormModal">
+    <form class="layui-form layui-form-pane" lay-filter="userForm" style="padding: 20px;">
+        <input type="hidden" name="user_id" id="userId">
+        <div class="layui-form-item">
+            <label class="layui-form-label">用户名</label>
+            <div class="layui-input-block">
+                <input type="text" name="username" lay-verify="required" placeholder="请输入用户名" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item" id="passwordItem">
+            <label class="layui-form-label">密码</label>
+            <div class="layui-input-block">
+                <input type="password" name="password" placeholder="请输入密码" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">角色</label>
+            <div class="layui-input-block">
+                <select name="role_id" lay-verify="required" id="roleSelect">
+                    <option value="">请选择角色</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">状态</label>
+            <div class="layui-input-block">
+                <input type="radio" name="status" value="1" title="启用" checked>
+                <input type="radio" name="status" value="0" title="禁用">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="saveUserBtn">保存</button>
+                <button type="button" class="layui-btn layui-btn-primary" id="cancelUserBtn">取消</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% include "profile_modals.html" %}
+{% end %}
+
+{% block script %}
+<script>
+layui.use(['form', 'table', 'layer', 'element', 'jquery'], function(){
+    var form = layui.form;
+    var table = layui.table;
+    var layer = layui.layer;
+    var element = layui.element;
+    var $ = layui.$;
+
+    // 个人信息弹窗
+    window.showProfile = function() {
+        $.ajax({
+            url: '/api/profile',
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                if (res.success) {
+                    var u = res.data;
+                    $('#profileUsername').text(u.username || '-');
+                    $('#profileRole').text(u.role_name || '-');
+                    $('#profileStatus').text(u.status == 1 ? '启用' : '禁用');
+                    $('#profileCreated').text(u.created_at || '-');
+                    layer.open({
+                        type: 1,
+                        title: '个人信息',
+                        area: ['500px'],
+                        content: $('#profileModal')
+                    });
+                }
+            },
+            error: function() {
+                layer.msg('获取个人信息失败', {icon: 2});
+            }
+        });
+    }
+
+    // 修改密码弹窗
+    window.showChangePwd = function() {
+        layer.open({
+            type: 1,
+            title: '修改密码',
+            area: ['500px'],
+            content: $('#changePwdModal'),
+            btn: ['保存', '取消'],
+            yes: function(index) {
+                var oldPwd = $('input[name="old_password"]').val();
+                var newPwd = $('input[name="new_password"]').val();
+                var confirmPwd = $('input[name="confirm_password"]').val();
+                if (!oldPwd || !newPwd || !confirmPwd) {
+                    layer.msg('请填写完整', {icon: 2});
+                    return;
+                }
+                if (newPwd !== confirmPwd) {
+                    layer.msg('两次密码输入不一致', {icon: 2});
+                    return;
+                }
+                if (newPwd.length < 6) {
+                    layer.msg('新密码长度不能少于6位', {icon: 2});
+                    return;
+                }
+                $.ajax({
+                    url: '/api/profile/change-password',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {old_password: oldPwd, new_password: newPwd},
+                    headers: {'X-XSRFToken': getXsrfToken()},
+                    success: function(res) {
+                        if (res.success) {
+                            layer.msg('密码修改成功，请重新登录', {icon: 1}, function() {
+                                document.getElementById('admin-logout-form').submit();
+                            });
+                            layer.close(index);
+                        } else {
+                            layer.msg(res.message, {icon: 2});
+                        }
+                    },
+                    error: function() {
+                        layer.msg('请求失败', {icon: 2});
+                    }
+                });
+            },
+            end: function() {
+                $('input[name="old_password"]').val('');
+                $('input[name="new_password"]').val('');
+                $('input[name="confirm_password"]').val('');
+            }
+        });
+    }
+
+    var currentPage = 1;
+    var pageSize = 20;
+    var openIndex = null;
+
+    // 获取XSRF token
+    function getXsrfToken() {
+        var match = document.cookie.match(/(_xsrf=([^;]*)|$)/);
+        return match ? decodeURIComponent(match[2]) : '';
+    }
+    
+    // 动态加载角色列表
+    function loadRolesDropdown(selectedRoleId) {
+        $.ajax({
+            url: '/api/roles/list',
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                var roles = res && res.data ? res.data : [];
+                var html = '<option value="">请选择角色</option>';
+                roles.forEach(function(role) {
+                    var selected = (selectedRoleId && String(role.id) === String(selectedRoleId)) ? 'selected' : '';
+                    html += '<option value="' + role.id + '" ' + selected + '>' + role.name + '</option>';
+                });
+                $('#roleSelect').html(html);
+                form.render('select');
+            },
+            error: function() {
+                console.error('Failed to load roles');
+            }
+        });
+    }
+
+    // 加载用户列表
+    function loadUsers(page, search, roleId, status) {
+        console.log('Loading users with params:', {page: page, search: search, role_id: roleId, status: status});
+        $.ajax({
+            url: '/api/users/list',
+            type: 'GET',
+            dataType: 'json',
+            data: {
+                page: page || currentPage,
+                page_size: pageSize,
+                search: search || '',
+                role_id: roleId || '',
+                status: status || ''
+            },
+            success: function(res) {
+                console.log('API Response:', res);
+                if (!res || !res.data) {
+                    console.error('Invalid response format:', res);
+                    $('#userTableBody').html('<tr><td colspan="6" style="text-align: center; color: red;">数据格式错误</td></tr>');
+                    return;
+                }
+                
+                var html = '';
+                if (res.data.length === 0) {
+                    html = '<tr><td colspan="6" style="text-align: center; color: #999;">暂无数据</td></tr>';
+                } else {
+                    res.data.forEach(function(user) {
+                        console.log('User:', user);
+                        var statusHtml = user.status == 1 ? '<span class="layui-badge layui-bg-green">启用</span>' : '<span class="layui-badge layui-bg-gray">禁用</span>';
+                        html += '<tr>' +
+                            '<td>' + user.id + '</td>' +
+                            '<td>' + user.username + '</td>' +
+                            '<td>' + (user.role_name || '-') + '</td>' +
+                            '<td>' + statusHtml + '</td>' +
+                            '<td>' + user.created_at + '</td>' +
+                            '<td>' +
+                                '<button class="layui-btn layui-btn-xs" onclick="editUser(' + user.id + ')">编辑</button> ' +
+                                '<button class="layui-btn layui-btn-danger layui-btn-xs" onclick="deleteUser(' + user.id + ', \'' + user.username + '\')">删除</button>' +
+                            '</td>' +
+                        '</tr>';
+                    });
+                }
+                $('#userTableBody').html(html);
+                
+                // 渲染分页
+                renderPagination(res.total, res.page, res.page_size);
+            },
+            error: function(xhr, status, error) {
+                console.error('Ajax Error:', status, error);
+                console.error('Response:', xhr.responseText);
+                $('#userTableBody').html('<tr><td colspan="6" style="text-align: center; color: red;">加载失败: ' + error + '</td></tr>');
+            }
+        });
+    }
+
+    // 渲染分页
+    function renderPagination(total, current, size) {
+        var pages = Math.ceil(total / size);
+        var html = '<div class="layui-box layui-laypage layui-laypage-default">';
+        html += '<span class="layui-laypage-count">共 ' + total + ' 条</span>';
+        for (var i = 1; i <= pages; i++) {
+            html += '<a href="javascript:;" class="layui-laypage-em ' + (i == current ? 'current' : '') + '" data-page="' + i + '">' + i + '</a>';
+        }
+        html += '</div>';
+        $('#pagination').html(html);
+        
+        $('#pagination a').on('click', function() {
+            currentPage = $(this).data('page');
+            loadUsers(currentPage);
+        });
+    }
+
+    // 搜索
+    form.on('submit(searchBtn)', function(data) {
+        currentPage = 1;
+        loadUsers(1, data.field.search, data.field.role_id, data.field.status);
+        return false;
+    });
+
+    // 保存用户（新增/编辑）
+    form.on('submit(saveUserBtn)', function(data) {
+        var field = data.field;
+        var userId = field.user_id;
+        var isEdit = userId && userId !== '';
+        console.log('Saving user:', field, 'isEdit:', isEdit);
+        
+        var url = isEdit ? '/api/users/update' : '/api/users/create';
+        
+        $.ajax({
+            url: url,
+            type: 'POST',
+            dataType: 'json',
+            data: field,
+            headers: {
+                'X-XSRFToken': getXsrfToken()
+            },
+            success: function(res) {
+                console.log('Save response:', res);
+                if (res.success) {
+                    layer.msg(isEdit ? '用户更新成功' : '用户创建成功', {icon: 1});
+                    if (openIndex) layer.close(openIndex);
+                    loadUsers(1);
+                } else {
+                    layer.msg(res.message, {icon: 2});
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Save error:', status, error);
+                try {
+                    var resp = JSON.parse(xhr.responseText);
+                    layer.msg(resp.message || '请求失败', {icon: 2});
+                } catch(e) {
+                    layer.msg('请求失败: ' + error, {icon: 2});
+                }
+            }
+        });
+        
+        return false;
+    });
+
+    // 新增用户
+    $('#addUserBtn').on('click', function() {
+        $('#userId').val('');
+        $('#passwordItem').show();
+        loadRolesDropdown(2);
+        form.val('userForm', {
+            'username': '',
+            'password': '',
+            'role_id': '2',
+            'status': '1'
+        });
+        
+        openIndex = layer.open({
+            type: 1,
+            title: '新增用户',
+            area: ['500px'],
+            content: $('#userFormModal'),
+            cancel: function(index) {
+                openIndex = null;
+            }
+        });
+        return false;
+    });
+
+    // 取消按钮
+    $('#cancelUserBtn').on('click', function() {
+        if (openIndex) {
+            layer.close(openIndex);
+            openIndex = null;
+        }
+    });
+
+    // 编辑用户
+    window.editUser = function(userId) {
+        $.ajax({
+            url: '/api/users/get',
+            type: 'GET',
+            dataType: 'json',
+            data: {user_id: userId},
+            success: function(res) {
+                if (res.success) {
+                    var user = res.data;
+                    $('#userId').val(user.id);
+                    $('#passwordItem').hide();
+                    loadRolesDropdown(user.role_id);
+                    form.val('userForm', {
+                        'username': user.username,
+                        'password': '',
+                        'role_id': String(user.role_id),
+                        'status': String(user.status)
+                    });
+                    form.render();
+                    
+                    openIndex = layer.open({
+                        type: 1,
+                        title: '编辑用户',
+                        area: ['500px'],
+                        content: $('#userFormModal'),
+                        cancel: function(index) {
+                            openIndex = null;
+                        }
+                    });
+                } else {
+                    layer.msg(res.message || '获取用户信息失败', {icon: 2});
+                }
+            },
+            error: function(xhr, status, error) {
+                layer.msg('获取用户信息失败: ' + error, {icon: 2});
+            }
+        });
+    };
+
+    // 删除用户
+    window.deleteUser = function(userId, username) {
+        if (username === 'admin') {
+            layer.msg('超级管理员不允许删除', {icon: 2});
+            return;
+        }
+        layer.confirm('确定要删除用户 "' + username + '" 吗？', function(index) {
+            $.ajax({
+                url: '/api/users/delete',
+                type: 'POST',
+                dataType: 'json',
+                data: {user_id: userId},
+                headers: {
+                    'X-XSRFToken': getXsrfToken()
+                },
+                success: function(res) {
+                    if (res.success) {
+                        layer.msg('用户删除成功', {icon: 1});
+                        layer.close(index);
+                        loadUsers(currentPage);
+                    } else {
+                        layer.msg(res.message, {icon: 2});
+                    }
+                },
+                error: function(xhr, status, error) {
+                    layer.msg('删除失败: ' + error, {icon: 2});
+                }
+            });
+        });
+    };
+
+    // 初始加载
+    console.log('Page loaded, loading users...');
+    loadUsers(1);
+});
+</script>
+{% end %}

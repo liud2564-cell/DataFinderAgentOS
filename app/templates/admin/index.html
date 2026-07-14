@@ -1,11 +1,6 @@
 {% extends "base.html" %}
 {% block body %}
 <style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
 .layui-layout-admin .layui-header {
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     box-shadow: 0 2px 8px rgba(0,0,0,.15);
@@ -19,31 +14,20 @@
     align-items: center;
     gap: 10px;
     padding-left: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-.layui-layout-admin .layui-logo i {
-    font-size: 26px;
-}
-.layui-header .layui-nav {
-    background: transparent;
-}
-.layui-header .layui-nav .layui-nav-item a {
-    color: rgba(255,255,255,.85);
-}
-.layui-header .layui-nav .layui-nav-item a:hover {
-    color: #fff;
-}
-.layui-header .layui-nav .layui-nav-item.layui-this a {
-    color: #fff;
-}
+
 .layui-side {
-    background: #1e293b;
+    background: #1e293b !important;
     top: 60px;
 }
 .layui-side-scroll {
     width: 220px;
 }
 .layui-nav-tree {
-    background: transparent;
+    background: #1e293b !important;
 }
 .layui-nav-tree .layui-nav-item a {
     color: rgba(255,255,255,.75);
@@ -55,20 +39,26 @@
     color: #fff;
 }
 .layui-nav-tree .layui-nav-item.layui-this a {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
     color: #fff;
 }
 .layui-nav-tree .layui-nav-child a {
     color: rgba(255,255,255,.7);
+    height: 46px;
+    line-height: 46px;
 }
 .layui-nav-tree .layui-nav-child a:hover {
     color: #fff;
+}
+.layui-nav-tree .layui-nav-item a i {
+    font-size: 16px !important;
 }
 .layui-body {
     top: 60px;
     left: 220px;
     background: #f1f5f9;
     padding: 20px;
+    overflow-y: auto;
 }
 .layui-footer {
     left: 220px;
@@ -81,7 +71,7 @@
 .dashboard-header {
     background: #fff;
     padding: 24px;
-    border-radius: 12px;
+    border-radius: 8px;
     margin-bottom: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,.06);
 }
@@ -104,7 +94,7 @@
 .dashboard-card {
     background: #fff;
     padding: 24px;
-    border-radius: 12px;
+    border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,.06);
     display: flex;
     align-items: center;
@@ -113,7 +103,7 @@
 .card-icon {
     width: 60px;
     height: 60px;
-    border-radius: 12px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -143,12 +133,12 @@
 }
 .card-info p {
     font-size: 14px;
- color: #64748b;
+    color: #64748b;
 }
 .dashboard-panel {
     background: #fff;
     padding: 24px;
-    border-radius: 12px;
+    border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,.06);
 }
 .dashboard-panel h3 {
@@ -176,75 +166,45 @@
             智能瞭望与问数后台
         </div>
         <ul class="layui-nav layui-layout-right">
-            <li class="layui-nav-item layui-hide layui-show-sm-inline-block">
-                <a href="javascript:;">
-                    <i class="layui-icon layui-icon-notice"></i>
-                    <span class="layui-badge-dot"></span>
-                </a>
-            </li>
             <li class="layui-nav-item">
                 <a href="javascript:;">
                     <i class="layui-icon layui-icon-username"></i>
                     {{ username }}
                 </a>
                 <dl class="layui-nav-child">
-                    <dd><a href="javascript:;">个人信息</a></dd>
-                    <dd><a href="javascript:;">修改密码</a></dd>
+                    <dd><a href="javascript:;" onclick="showProfile()">个人信息</a></dd>
+                    <dd><a href="javascript:;" onclick="showChangePwd()">修改密码</a></dd>
                     <dd><a href="/admin/" onclick="event.preventDefault(); document.getElementById('admin-logout-form').submit();">退出登录</a></dd>
                 </dl>
             </li>
         </ul>
     </div>
 
-    <div class="layui-side layui-bg-black">
+    <div class="layui-side">
         <div class="layui-side-scroll">
             <ul class="layui-nav layui-nav-tree" lay-filter="side-nav">
-                <li class="layui-nav-item layui-this">
+                {% for parent in user_info.get('menu_tree', []) %}
+                {% if parent.get('children', []) %}
+                <li class="layui-nav-item {% if request.path == parent.get('func_route') %}layui-this{% elif parent.get('has_active_child') %}layui-nav-itemed{% end %}">
                     <a href="javascript:;">
-                        <i class="layui-icon layui-icon-home"></i>
-                        控制台
-                    </a>
-                </li>
-                <li class="layui-nav-item">
-                    <a href="javascript:;">
-                        <i class="layui-icon layui-icon-user"></i>
-                        用户管理
+                        <i class="layui-icon {{ parent.get('func_icon') }}"></i> {{ parent.get('func_name') }}
                     </a>
                     <dl class="layui-nav-child">
-                        <dd><a href="javascript:;">用户列表</a></dd>
-                        <dd><a href="javascript:;">角色管理</a></dd>
+                        {% for child in parent.get('children', []) %}
+                        <dd class="{% if request.path == child.get('func_route') %}layui-this{% end %}">
+                            <a href="{{ child.get('func_route') }}"><i class="layui-icon {{ child.get('func_icon') }}"></i> {{ child.get('func_name') }}</a>
+                        </dd>
+                        {% end %}
                     </dl>
                 </li>
-                <li class="layui-nav-item">
-                    <a href="javascript:;">
-                        <i class="layui-icon layui-icon-form"></i>
-                        数据管理
+                {% else %}
+                <li class="layui-nav-item {% if request.path == parent.get('func_route') %}layui-this{% end %}">
+                    <a href="{{ parent.get('func_route') }}">
+                        <i class="layui-icon {{ parent.get('func_icon') }}"></i> {{ parent.get('func_name') }}
                     </a>
-                    <dl class="layui-nav-child">
-                        <dd><a href="javascript:;">采集管理</a></dd>
-                        <dd><a href="javascript:;">数据列表</a></dd>
-                    </dl>
                 </li>
-                <li class="layui-nav-item">
-                    <a href="javascript:;">
-                        <i class="layui-icon layui-icon-chart-screen"></i>
-                        可视化
-                    </a>
-                    <dl class="layui-nav-child">
-                        <dd><a href="javascript:;">数智大屏</a></dd>
-                        <dd><a href="javascript:;">舆情大屏</a></dd>
-                    </dl>
-                </li>
-                <li class="layui-nav-item">
-                    <a href="javascript:;">
-                        <i class="layui-icon layui-icon-set"></i>
-                        系统设置
-                    </a>
-                    <dl class="layui-nav-child">
-                        <dd><a href="javascript:;">系统配置</a></dd>
-                        <dd><a href="javascript:;">菜单管理</a></dd>
-                    </dl>
-                </li>
+                {% end %}
+                {% end %}
             </ul>
         </div>
     </div>
@@ -343,16 +303,101 @@
     </div>
 </div>
 
-<form id="admin-logout-form" method="post" action="/admin/logout" style="display: none;">
-    {% module xsrf_form_html() %}
-</form>
+{% include "profile_modals.html" %}
 {% end %}
 
 {% block script %}
 <script>
-layui.use(['element', 'layer'], function() {
+layui.use(['element', 'layer', 'jquery'], function() {
     var element = layui.element;
     var layer = layui.layer;
+    var $ = layui.$;
+
+    // 获取XSRF token
+    function getXsrfToken() {
+        var match = document.cookie.match(/(_xsrf=([^;]*)|$)/);
+        return match ? decodeURIComponent(match[2]) : '';
+    }
+
+    // 个人信息弹窗
+    window.showProfile = function() {
+        $.ajax({
+            url: '/api/profile',
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                if (res.success) {
+                    var u = res.data;
+                    $('#profileUsername').text(u.username || '-');
+                    $('#profileRole').text(u.role_name || '-');
+                    $('#profileStatus').text(u.status == 1 ? '启用' : '禁用');
+                    $('#profileCreated').text(u.created_at || '-');
+                    layer.open({
+                        type: 1,
+                        title: '个人信息',
+                        area: ['500px'],
+                        content: $('#profileModal')
+                    });
+                }
+            },
+            error: function() {
+                layer.msg('获取个人信息失败', {icon: 2});
+            }
+        });
+    }
+
+    // 修改密码弹窗
+    window.showChangePwd = function() {
+        layer.open({
+            type: 1,
+            title: '修改密码',
+            area: ['500px'],
+            content: $('#changePwdModal'),
+            btn: ['保存', '取消'],
+            yes: function(index) {
+                var oldPwd = $('input[name="old_password"]').val();
+                var newPwd = $('input[name="new_password"]').val();
+                var confirmPwd = $('input[name="confirm_password"]').val();
+                if (!oldPwd || !newPwd || !confirmPwd) {
+                    layer.msg('请填写完整', {icon: 2});
+                    return;
+                }
+                if (newPwd !== confirmPwd) {
+                    layer.msg('两次密码输入不一致', {icon: 2});
+                    return;
+                }
+                if (newPwd.length < 6) {
+                    layer.msg('新密码长度不能少于6位', {icon: 2});
+                    return;
+                }
+                $.ajax({
+                    url: '/api/profile/change-password',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {old_password: oldPwd, new_password: newPwd},
+                    headers: {'X-XSRFToken': getXsrfToken()},
+                    success: function(res) {
+                        if (res.success) {
+                            layer.msg('密码修改成功，请重新登录', {icon: 1}, function() {
+                                document.getElementById('admin-logout-form').submit();
+                            });
+                            layer.close(index);
+                        } else {
+                            layer.msg(res.message, {icon: 2});
+                        }
+                    },
+                    error: function() {
+                        layer.msg('请求失败', {icon: 2});
+                    }
+                });
+            },
+            end: function() {
+                $('input[name="old_password"]').val('');
+                $('input[name="new_password"]').val('');
+                $('input[name="confirm_password"]').val('');
+            }
+        });
+    }
 });
 </script>
 {% end %}

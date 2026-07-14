@@ -1,0 +1,39 @@
+<!-- 个人信息弹窗 -->
+<div id="profileModal" style="display: none; padding: 20px;">
+    <table class="layui-table" lay-skin="nob">
+        <colgroup><col width="100"><col></colgroup>
+        <tr><td style="text-align: right; font-weight: bold; color: #666;">用户名</td><td id="profileUsername">-</td></tr>
+        <tr><td style="text-align: right; font-weight: bold; color: #666;">角色</td><td id="profileRole">-</td></tr>
+        <tr><td style="text-align: right; font-weight: bold; color: #666;">状态</td><td id="profileStatus">-</td></tr>
+        <tr><td style="text-align: right; font-weight: bold; color: #666;">创建时间</td><td id="profileCreated">-</td></tr>
+    </table>
+</div>
+
+<!-- 修改密码弹窗 -->
+<div id="changePwdModal" style="display: none; padding: 20px;">
+    <form class="layui-form">
+        <div class="layui-form-item">
+            <label class="layui-form-label" style="width: 100px;">旧密码</label>
+            <div class="layui-input-block" style="margin-left: 130px;">
+                <input type="password" name="old_password" lay-verify="required" placeholder="请输入旧密码" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" style="width: 100px;">新密码</label>
+            <div class="layui-input-block" style="margin-left: 130px;">
+                <input type="password" name="new_password" lay-verify="required" placeholder="请输入新密码（至少6位）" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" style="width: 100px;">确认新密码</label>
+            <div class="layui-input-block" style="margin-left: 130px;">
+                <input type="password" name="confirm_password" lay-verify="required" placeholder="请再次输入新密码" class="layui-input">
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- 退出表单 -->
+<form id="admin-logout-form" method="post" action="/admin/logout" style="display: none;">
+    {% module xsrf_form_html() %}
+</form>
