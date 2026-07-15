@@ -1,0 +1,96 @@
+Folder PATH listing for volume Data
+Volume serial number is 00000042 76EC:5782
+D:.
+└───DataFinderAgentOS
+    │   run.py
+    │   
+    ├───app
+    |   |————_init_.py
+    │   ├───controllers 控制层-controllers包
+    │   │       auth.py        登录/注销控制器（前台+后台）
+    │   │       base.py        基础Handler（会话管理、用户信息、菜单树）
+    │   │       home.py        首页渲染控制器
+    │   │       admin_user.py      用户管理页面+API
+    │   │       admin_role.py      角色管理页面+API
+    │   │       admin_function.py  功能管理页面+API
+    │   │       admin_menu.py      菜单管理页面+API
+    │   │       admin_profile.py   个人信息/修改密码API
+    │   │       admin_source.py    瞭源管理页面+API（新增/删除/修改/列表/活跃列表）
+    │   │       admin_watch.py     瞭望管理页面+API（采集触发/采集数据查询）
+    │   │       _init_.py
+    │   │       
+    │   ├───models 模型层-models包
+    │   │       db.py               数据库连接与表初始化（users,roles,functions,menus,role_functions,watch_sources,watch_collected_data）
+    │   │       user.py             用户仓库（CRUD + 密码验证）
+    │   │       role.py             角色仓库（CRUD）
+    │   │       function.py         功能仓库（CRUD）
+    │   │       menu.py             菜单仓库（CRUD + 树构建）
+    │   │       watch_source.py     瞭源仓库（CRUD + 活跃查询）
+    │   │       watch_data.py       采集数据仓库（分页查询 + 批量入库）
+    │   │       _init_.py
+    │   │       
+    │   ├───static 资源目录-用于css\js以及第三方用户组件
+    │   │   ├───css
+    │   │   │       base.css
+    │   │   │       
+    │   │   ├───dist 本地化第三方前端组件资源目录
+    │   │   │   ├───bootstrap-5.3.8-dist Bootstrap官方组件包，用于补充样式、栅格和特殊界面需求
+    │   │   │   └───layui Layui官方组件包，前后台界面优先使用
+    │   │   └───js
+    │   │           base.js
+    │   │           
+    │   └───templates 模板目录-用于构建前台用户侧和后台管理侧的界面和页面
+    │       │   base.html 用户侧-公共基础模板页
+    │       │   index.html 用户侧-登陆后主页
+    │       │   login.html 用户侧-登录页
+    │       │   register.html 用户侧-注册页
+    │       │   说明:与admin目录同级的模板文件，均用于用户侧前台页面
+    │       │   
+    │       └───admin 后台管理侧目录
+    │               说明:该目录下模板文件均用于后台管理侧页面
+    │               base.html 后台管理侧-公共基础模板页
+    │               index.html 后台管理侧-登录后后台主页
+    │               login.html 后台管理侧-登录页
+    │               user_management.html 用户管理页面
+    │               role_management.html 角色管理页面
+    │               function_management.html 功能管理页面
+    │               menu_management.html 菜单管理页面
+    │               source_management.html 瞭源管理页面（CRUD表格风格）
+    │               watch_management.html 瞭望管理页面（A区搜索/B区瞭源开关/C区橱窗列表）
+    │               profile_modals.html 个人信息/修改密码弹窗
+    │               
+    ├───config 系统配置统一存储目录，运行配置、安全配置、模型配置、环境配置等均放置于此
+    ├───database 系统数据库和数据存储目录
+    │       finderos.db SQLite数据库文件（自动创建）
+    ├───docs 开发用的提示词工程及开发帮助文档目录
+    │       codingprompt.txt 用于编码的提示词工程文件，人类维护
+    │       constraint.md 用于公共全局的约束提示词工程文档，AI自动维护(前期人类约定)
+    │       project_tree_base.txt 用于理解当前项目框架的基础树文件，这个文件代表项目的最初始框架结构。
+    │       project_tree_full.txt 用于理解当前项目框架的完整树文件，这个文件代表项目在不同版本下的框架结构情况，AI自动跟踪维护。
+    │       role.md 用于系统背景有关的提示词工程文档，人类约定，AI不用维护。
+    │       requirement.md 用于理解和跟踪需求变化及开发需求完成情况的需求提示词工程文档，AI自动维护(前期人类约定)
+    │       template.md 用于理解当前系统模板规范和要求的提示词工程文档，人类约定，AI不用维护。
+    │       test_case.md 用于项目过程测试及后期安全测试、功能测试、性能测试的用例提示词工程文档，人类约定，A适时维护(通过指令告知)
+    |
+    ├───skills 项目中引用的或自定义创建开发技能:前端技能/后台技能等，默认为空。
+    ├───test 项目中用于测试用例代码执行和编写的目录，本项目所有测试代码放置于此，格式为:xxx_case.py,只允许新增，不允许删除。
+    └───venv python3创建的虚拟空间，本项目所有开发任务全部在虚拟空间中完成(python-m venv venv)，启动及测试也需要在虚拟空间中完成。
+
+补充技术栈说明
+- 界面组件栈：Layui优先，Bootstrap补充。
+- AI对话通信栈：WebSocket + SSE + OpenAI，用于后续大模型通信与对话功能。
+
+补充业务需求说明
+- 系统定位：某政务智能瞭望与智能问数系统，采用Web B/S结构。
+- 用户侧基础模块：用户登录、用户注册、用户对话、数字员工、@天气、@新闻、@音乐、@电影、@川哥、报表功能、历史记录、报告导出。
+- 管理侧基础模块：用户管理、功能管理、菜单管理、角色管理、瞭望管理、数据管理、采集管理、数字员工、模型引擎、数智大屏、舆情大屏。
+
+补充界面与安全要求说明
+- 界面设计要求：响应式设计、沉浸式风格、自适应模式（移动端+PC端）。
+- 安全设计要求：对OWASP Top 10主要漏洞具备应对策略和机制。
+- 配置治理要求：所有配置统一存放在config目录下。
+
+补充路由设计说明
+- 后台路由统一使用 `/admin/` 前缀，对外形式为 `http://xxx/admin/`。
+- 前台路由统一使用根路径体系，对外形式为 `http://xxx/`。
+      

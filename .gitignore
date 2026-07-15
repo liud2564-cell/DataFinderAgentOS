@@ -1,23 +1,13 @@
-# 虚拟环境
-venv/
 __pycache__/
 *.pyc
 *.pyo
-
-# 数据库
 *.db
-database/
-
-# 文档和开发辅助
-docs/
-skills/
-temp/
-test/
-
-# IDE
-.trae/
+*.db-shm
+*.db-wal
+config/runtime_secret.txt
+venv/
+.venv/
+.idea/
 .vscode/
-
-# 系统文件
-.DS_Store
-Thumbs.db
+dist/
+*.egg-info/

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>好吃就是高兴 — 任务抽签分配</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);min-height:100vh;color:#e0e0e0;display:flex;justify-content:center;padding:40px 20px}
+.container{max-width:900px;width:100%}
+h1{text-align:center;font-size:28px;margin-bottom:8px;color:#fff}
+h1 span{background:linear-gradient(90deg,#f093fb,#f5576c);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;font-size:14px;color:#888;margin-bottom:8px}
+.api-status{text-align:center;font-size:12px;margin-bottom:24px}
+.api-status .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.api-status.online .dot{background:#43e97b}
+.api-status.offline .dot{background:#ff4d4f}
+.api-status.online{color:#43e97b}
+.api-status.offline{color:#ff4d4f}
+
+.tasks-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:32px}
+.task-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;text-align:center;transition:all .3s}
+.task-card:hover{border-color:rgba(255,255,255,.3);transform:translateY(-2px)}
+.task-card .letter{font-size:32px;font-weight:bold;margin-bottom:4px}
+.task-card .name{font-size:12px;color:#ccc;margin-bottom:6px}
+.task-card .detail{font-size:10px;color:#888;line-height:1.5}
+.task-card.a .letter{color:#f5576c}
+.task-card.b .letter{color:#f093fb}
+.task-card.c .letter{color:#4facfe}
+.task-card.d .letter{color:#43e97b}
+.task-card.e .letter{color:#ffd700}
+
+.section{background:rgba(255,255,255,.05);border-radius:16px;padding:24px;margin-bottom:24px}
+.section h2{font-size:18px;margin-bottom:16px;color:#fff}
+.section h2 small{font-size:13px;color:#888;font-weight:normal}
+
+.member-row{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.member-row label{width:90px;font-size:14px;color:#ccc;flex-shrink:0}
+.member-row input.name-input{width:120px;height:40px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;padding:0 10px;font-size:14px;outline:none;transition:border .3s}
+.member-row input.name-input:focus{border-color:#4facfe}
+.member-row .sep{color:#555;font-size:12px}
+.member-row select{height:40px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;padding:0 10px;font-size:13px;outline:none;min-width:190px;cursor:pointer}
+.member-row select option{background:#1a1a2e;color:#fff}
+
+.btn-row{text-align:center;margin:20px 0}
+.btn{padding:14px 48px;border:none;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;transition:all .3s;color:#fff}
+.btn-draw{background:linear-gradient(90deg,#f093fb,#f5576c)}
+.btn-draw:hover{transform:scale(1.05);box-shadow:0 8px 30px rgba(240,147,251,.3)}
+.btn-draw:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-reset{background:rgba(255,255,255,.1);margin-left:12px}
+.btn-reset:hover{background:rgba(255,255,255,.2)}
+
+.warning{background:rgba(255,77,79,.1);border:1px solid rgba(255,77,79,.3);color:#ff6b6b;padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none}
+
+.result-section{display:none}
+.result-section.show{display:block}
+.result-card{background:rgba(255,255,255,.08);border-radius:12px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px;border:1px solid rgba(255,255,255,.1);flex-wrap:wrap}
+.result-card .member-name{font-size:17px;font-weight:bold;color:#fff;min-width:90px}
+.result-card .arrow{color:#888;font-size:18px}
+.result-card .task-badge{display:inline-block;padding:6px 18px;border-radius:8px;font-size:15px;font-weight:bold}
+.task-badge.a{background:rgba(245,87,108,.2);color:#f5576c;border:1px solid rgba(245,87,108,.3)}
+.task-badge.b{background:rgba(240,147,251,.2);color:#f093fb;border:1px solid rgba(240,147,251,.3)}
+.task-badge.c{background:rgba(79,172,254,.2);color:#4facfe;border:1px solid rgba(79,172,254,.3)}
+.task-badge.d{background:rgba(67,233,123,.2);color:#43e97b;border:1px solid rgba(67,233,123,.3)}
+.task-badge.e{background:rgba(255,215,0,.2);color:#ffd700;border:1px solid rgba(255,215,0,.3)}
+.result-card .task-detail{color:#aaa;font-size:12px;margin-left:8px}
+.result-card .pref{color:#666;font-size:11px;margin-left:auto}
+
+.log-box{background:rgba(0,0,0,.3);border-radius:8px;padding:14px;margin-top:16px;font-family:monospace;font-size:12px;color:#aaa;line-height:1.8;max-height:200px;overflow-y:auto;display:none}
+.log-box.show{display:block}
+.log-box .log-line{color:#888}
+
+.footer{text-align:center;margin-top:40px;color:#555;font-size:12px}
+.toggle-log{color:#666;font-size:12px;cursor:pointer;margin-top:8px;display:inline-block}
+.toggle-log:hover{color:#aaa}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1><span>好吃就是高兴</span> 任务抽签</h1>
+  <p class="subtitle">先填姓名和志愿 → 后端统一抽签 → 公示结果</p>
+  <div class="api-status offline" id="apiStatus"><span class="dot"></span><span id="apiStatusText">等待连接...</span></div>
+
+  <div class="tasks-grid">
+    <div class="task-card a"><div class="letter">A</div><div class="name">数智大屏+舆情大屏</div><div class="detail">3D地球·词云·数据大屏<br>敏感词预警·控制台图表</div></div>
+    <div class="task-card b"><div class="letter">B</div><div class="name">数字员工+接口+技能</div><div class="detail">6+数字员工·接口管理<br>技能管理·员工页面完善</div></div>
+    <div class="task-card c"><div class="letter">C</div><div class="name">问数+数据仓库+PDF</div><div class="detail">NL2SQL问数·报表表格<br>批量采集·PDF导出</div></div>
+    <div class="task-card d"><div class="letter">D</div><div class="name">模型引擎+AI交互</div><div class="detail">多模态·人脸登录<br>TTS语音·手势交互</div></div>
+    <div class="task-card e"><div class="letter">E</div><div class="name">审计+PPT+文档+打包</div><div class="detail">系统设置·审计报告x2<br>PPT·海报·视频·打包</div></div>
+  </div>
+
+  <div class="section">
+    <h2>填写志愿 <small>（每人填姓名 + 选择第一志愿和第二志愿，志愿不可相同）</small></h2>
+    <div id="memberForms"></div>
+  </div>
+
+  <div class="warning" id="warning"></div>
+
+  <div class="btn-row">
+    <button class="btn btn-draw" id="drawBtn" onclick="submitDraw()">提交志愿并抽签</button>
+    <button class="btn btn-reset" onclick="resetAll()">重置</button>
+  </div>
+
+  <div class="result-section" id="resultSection">
+    <h2 style="color:#fff;margin-bottom:16px">抽签结果</h2>
+    <div id="resultList"></div>
+    <span class="toggle-log" onclick="toggleLog()">显示/隐藏抽签日志</span>
+    <div class="log-box" id="logBox"></div>
+  </div>
+
+  <div class="footer">好吃就是高兴 © 2026 · 智能瞭望与智能问数系统</div>
+</div>
+
+<script>
+var API = window.location.origin || "http://localhost:10011";
+var MEMBER_COUNT = 5;
+var tasks = ["A","B","C","D","E"];
+var taskNames = {
+  "A":"数智大屏 + 舆情大屏","B":"数字员工 + 接口 + 技能",
+  "C":"问数 + 数据仓库 + PDF","D":"模型引擎 + AI交互",
+  "E":"系统设置 + 审计 + PPT/视频/打包"
+};
+var taskBrief = {
+  "A":"3D地球、词云、数据大屏、敏感词预警、控制台图表",
+  "B":"6+数字员工、接口管理CRUD、技能管理、员工页面完善",
+  "C":"NL2SQL问数、报表表格、批量采集、PDF导出",
+  "D":"多模态模型、人脸登录、TTS语音、手势交互",
+  "E":"系统设置、审计报告x2、PPT、海报、视频、打包兜底"
+};
+
+// 检查后端连接
+function checkAPI(){
+  fetch(API+"/api/ping").then(function(r){return r.json()}).then(function(d){
+    if(d.ok){setStatus(true);}else{setStatus(false);}
+  }).catch(function(){setStatus(false);});
+}
+function setStatus(online){
+  var el=document.getElementById("apiStatus");
+  el.className="api-status "+(online?"online":"offline");
+  document.getElementById("apiStatusText").textContent=online?"后端在线 - 可以抽签":"后端离线 - 等待服务器启动";
+  document.getElementById("drawBtn").disabled=!online;
+}
+checkAPI(); setInterval(checkAPI,5000);
+
+function buildForms(){
+  var html="";
+  for(var i=1;i<=MEMBER_COUNT;i++){
+    var opts=tasks.map(function(t){return'<option value="'+t+'">'+t+' - '+taskNames[t]+'</option>';}).join("");
+    html+='<div class="member-row">';
+    html+='<label>成员 '+i+'</label>';
+    html+='<input class="name-input" id="name_'+i+'" placeholder="输入姓名">';
+    html+='<span class="sep">第一志愿</span>';
+    html+='<select id="choice1_'+i+'">'+opts+'</select>';
+    html+='<span class="sep">第二志愿</span>';
+    html+='<select id="choice2_'+i+'">'+opts+'</select>';
+    html+='</div>';
+  }
+  document.getElementById("memberForms").innerHTML=html;
+  // 默认值避免重复
+  for(var i=1;i<=MEMBER_COUNT;i++){
+    document.getElementById("choice1_"+i).value=tasks[(i-1)%5];
+    document.getElementById("choice2_"+i).value=tasks[i%5];
+    var s1=document.getElementById("choice1_"+i);
+    var s2=document.getElementById("choice2_"+i);
+    (function(idx){s1.addEventListener("change",function(){fixChoices(idx);});})(i);
+    (function(idx){s2.addEventListener("change",function(){fixChoices(idx);});})(i);
+  }
+}
+function fixChoices(i){
+  var s1=document.getElementById("choice1_"+i);
+  var s2=document.getElementById("choice2_"+i);
+  if(s1.value===s2.value){
+    for(var t=0;t<tasks.length;t++){if(tasks[t]!==s1.value){s2.value=tasks[t];break;}}
+  }
+}
+
+function submitDraw(){
+  document.getElementById("warning").style.display="none";
+  var members=[], valid=true;
+  for(var i=1;i<=MEMBER_COUNT;i++){
+    var name=document.getElementById("name_"+i).value.trim();
+    var c1=document.getElementById("choice1_"+i).value;
+    var c2=document.getElementById("choice2_"+i).value;
+    if(!name){showWarn("成员 "+i+" 请填写姓名");valid=false;continue;}
+    if(c1===c2){showWarn(name+" 的第一志愿和第二志愿相同！");valid=false;}
+    var dup=members.filter(function(m){return m.name===name;});
+    if(dup.length>0){showWarn(name+" 姓名重复，请区分！");valid=false;}
+    members.push({name:name,first:c1,second:c2});
+  }
+  if(!valid)return;
+
+  document.getElementById("drawBtn").disabled=true;
+  document.getElementById("drawBtn").textContent="抽签中...";
+
+  fetch(API+"/api/draw",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({members:members})})
+  .then(function(r){return r.json()}).then(function(d){
+    document.getElementById("drawBtn").disabled=false;
+    document.getElementById("drawBtn").textContent="提交志愿并抽签";
+    if(!d.ok){showWarn(d.msg);return;}
+    showResults(d.results,d.log);
+    document.getElementById("resultSection").scrollIntoView({behavior:"smooth"});
+  }).catch(function(e){
+    document.getElementById("drawBtn").disabled=false;
+    document.getElementById("drawBtn").textContent="提交志愿并抽签";
+    showWarn("无法连接后端，请确认 draw_server.py 已启动: "+e);
+  });
+}
+
+function showResults(results,log){
+  var section=document.getElementById("resultSection");
+  var list=document.getElementById("resultList");
+  var logBox=document.getElementById("logBox");
+  section.classList.add("show");
+  list.innerHTML="";
+  logBox.innerHTML=(log||[]).map(function(l){return'<div class="log-line">'+l+'</div>';}).join("");
+  logBox.classList.remove("show");
+
+  results.forEach(function(r){
+    var t=r.assigned;
+    var div=document.createElement("div");
+    div.className="result-card";
+    div.innerHTML='<div class="member-name">'+r.name+'</div>'+
+      '<div class="arrow">→</div>'+
+      '<div><span class="task-badge '+t.toLowerCase()+'">'+t+'</span></div>'+
+      '<div class="task-detail">'+taskNames[t]+' — '+taskBrief[t]+'</div>'+
+      '<div class="pref">志愿1: '+r.first+' | 志愿2: '+r.second+'</div>';
+    list.appendChild(div);
+  });
+}
+
+function toggleLog(){
+  document.getElementById("logBox").classList.toggle("show");
+}
+function showWarn(msg){
+  var w=document.getElementById("warning");
+  w.textContent=msg; w.style.display="block";
+}
+function resetAll(){
+  document.getElementById("resultSection").classList.remove("show");
+  document.getElementById("resultList").innerHTML="";
+  document.getElementById("logBox").innerHTML="";
+  document.getElementById("warning").style.display="none";
+  for(var i=1;i<=MEMBER_COUNT;i++){
+    document.getElementById("name_"+i).value="";
+    document.getElementById("choice1_"+i).value=tasks[(i-1)%5];
+    document.getElementById("choice2_"+i).value=tasks[i%5];
+  }
+}
+
+buildForms();
+</script>
+</body>
+</html>
