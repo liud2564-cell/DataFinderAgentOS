@@ -148,8 +148,6 @@
                             <div class="layui-input-block">
                                 <select name="role_id">
                                     <option value="">全部角色</option>
-                                    <option value="1">系统管理员</option>
-                                    <option value="2">普通用户</option>
                                 </select>
                             </div>
                         </div>
@@ -347,26 +345,31 @@ layui.use(['form', 'table', 'layer', 'element', 'jquery'], function(){
         return match ? decodeURIComponent(match[2]) : '';
     }
     
-    // 动态加载角色列表
-    function loadRolesDropdown(selectedRoleId) {
+    // 动态加载角色列表（搜索筛选+编辑表单共用）
+    function loadRolesDropdown(selectElement, selectedRoleId) {
         $.ajax({
             url: '/api/roles/list',
             type: 'GET',
             dataType: 'json',
             success: function(res) {
                 var roles = res && res.data ? res.data : [];
-                var html = '<option value="">请选择角色</option>';
+                var html = '<option value="">' + (selectElement === '#roleSelect' ? '请选择角色' : '全部角色') + '</option>';
                 roles.forEach(function(role) {
                     var selected = (selectedRoleId && String(role.id) === String(selectedRoleId)) ? 'selected' : '';
                     html += '<option value="' + role.id + '" ' + selected + '>' + role.name + '</option>';
                 });
-                $('#roleSelect').html(html);
+                $(selectElement).html(html);
                 form.render('select');
             },
             error: function() {
                 console.error('Failed to load roles');
             }
         });
+    }
+
+    // 备用：兼容原有 loadRolesDropdown 调用
+    function loadRolesDropdownForEdit(selectedRoleId) {
+        loadRolesDropdown('#roleSelect', selectedRoleId);
     }
 
     // 加载用户列表
@@ -497,7 +500,7 @@ layui.use(['form', 'table', 'layer', 'element', 'jquery'], function(){
     $('#addUserBtn').on('click', function() {
         $('#userId').val('');
         $('#passwordItem').show();
-        loadRolesDropdown(2);
+        loadRolesDropdown('#roleSelect', 2);
         form.val('userForm', {
             'username': '',
             'password': '',
@@ -541,7 +544,7 @@ layui.use(['form', 'table', 'layer', 'element', 'jquery'], function(){
                     // 编辑时显示密码字段
                     $('#passwordItem').show();
                     
-                    loadRolesDropdown(user.role_id);
+                    loadRolesDropdown('#roleSelect', user.role_id);
                     form.val('userForm', {
                         'username': user.username,
                         'password': '',
@@ -614,6 +617,8 @@ layui.use(['form', 'table', 'layer', 'element', 'jquery'], function(){
 
     // 初始加载
     console.log('Page loaded, loading users...');
+    // 加载搜索筛选的角色列表（与后台角色同步）
+    loadRolesDropdown('select[name="role_id"]', '');
     loadUsers(1);
 });
 </script>

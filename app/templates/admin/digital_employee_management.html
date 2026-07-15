@@ -265,7 +265,7 @@
 
 <!-- 详情弹窗 -->
 <div style="display:none;" id="detailModal">
-    <div class="detail-view" style="padding:0 15px;">
+    <div class="detail-view" style="padding:0 15px;overflow-y:auto;max-height:calc(70vh - 60px);">
         <div class="detail-item" style="margin-bottom:12px;"><label style="font-weight:600;color:#475569;font-size:13px;display:block;">名称</label><div style="color:#1e293b;font-size:14px;" id="detailName"></div></div>
         <div class="detail-item" style="margin-bottom:12px;"><label style="font-weight:600;color:#475569;font-size:13px;display:block;">类型</label><div style="color:#1e293b;font-size:14px;" id="detailType"></div></div>
         <div class="detail-item" style="margin-bottom:12px;"><label style="font-weight:600;color:#475569;font-size:13px;display:block;">描述</label><div style="color:#1e293b;font-size:14px;" id="detailDesc"></div></div>
@@ -737,7 +737,7 @@ layui.use(['form', 'layer', 'jquery'], function(){
                         $('#detailApiParams').text(Object.keys(params).length > 0 ? JSON.stringify(params, null, 2) : '(无)');
                     } catch(e) { $('#detailApiParams').text(d.api_params || '(无)'); }
                 }
-                layer.open({type:1, title:'数字员工详情', area:['600px'], content:$('#detailModal')});
+                layer.open({type:1, title:'数字员工详情', area:['600px', '85%'], content:$('#detailModal'), cancel:function(idx){layer.close(idx);}});
             }
         });
     };
